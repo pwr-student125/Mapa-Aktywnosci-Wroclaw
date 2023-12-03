@@ -1,0 +1,870 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="css/leaflet.css"><link rel="stylesheet" href="css/L.Control.Locate.min.css">
+        <link rel="stylesheet" href="css/qgis2web.css"><link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="css/MarkerCluster.css">
+        <link rel="stylesheet" href="css/MarkerCluster.Default.css">
+        <link rel="stylesheet" href="css/leaflet-search.css">
+        <link rel="stylesheet" href="css/leaflet-control-geocoder.Geocoder.css">
+        <link rel="stylesheet" href="Leaflet.MousePosition-master/src/L.Control.MousePosition.css">
+		<script src="Leaflet.MousePosition-master/src/L.Control.MousePosition.js"></script>
+		<link rel="stylesheet" href="leaflet.fullscreen-master/Control.FullScreen.css" />
+		<script src="leaflet.fullscreen-master/Control.FullScreen.js"></script>
+		<link rel="stylesheet" href="Leaflet-MiniMap-master/src/Control.MiniMap.css" />
+		<script src="Leaflet-MiniMap-master/src/Control.MiniMap.js"></script>
+		<link rel="stylesheet" href="Leaflet.Legend-master/src/leaflet.legend.css" />
+		<script src="Leaflet.Legend-master/src/leaflet.legend.js"></script>
+		<style>
+        html, body, #map {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+		h1 {
+		text-shadow: 0 0 8px #ffffff, 0 0 8px #ffffff;
+		}
+		h3 {
+		text-shadow: 0 0 8px #ffffff, 0 0 8px #ffffff;
+		}
+        </style>
+        <title></title>
+    </head>
+	<body style="background-color: yellowgreen">
+	<h1><center>Mapa aktywności weekendowej we Wrocławiu</center></h1>
+		<p>
+	<h3><center>Mapa Wrocławia przedstawia różne miejsca aktywności weekendowej oraz powiązane z tą tematyką wyniki geoankiety. Na mapie zawarte są również informacje o ulicach, przystankach, osiedlach oraz budynkach.</center></h3>
+        <div id="map">
+        </div>
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script><script src="js/L.Control.Locate.min.js"></script>
+        <script src="js/leaflet-svg-shape-markers.min.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script>
+        <script src="js/leaflet-control-geocoder.Geocoder.js"></script>
+        <script src="js/leaflet.markercluster.js"></script>
+        <script src="js/leaflet-search.js"></script>
+        <script src="data/Osiedla_1.js"></script>
+        <script src="data/Budynki_2.js"></script>
+        <script src="data/Ulice_3.js"></script>
+        <script src="data/Przystanki_4.js"></script>
+        <script src="data/AktywnociMiejskie_5.js"></script>
+        <script src="data/AktywnociSportowe_6.js"></script>
+        <script src="data/WynikiAnkiety_7.js"></script>
+		<script src="Leaflet.MousePosition-master/src/L.Control.MousePosition.js"></script>
+		<script src="leaflet.fullscreen-master/Control.FullScreen.js"></script>
+		<script src="Leaflet-MiniMap-master/src/Control.MiniMap.js"></script>
+		<script src="Leaflet.Legend-master/src/leaflet.legend.js"></script>
+        <script>
+        var map = L.map('map', {
+            zoomControl:true, maxZoom:28, minZoom:1,
+			fullscreenControl: true, fullscreenControlOptions: {
+				position:"topleft"
+				}
+        })
+		var osmUrl='http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+		var osmAttrib='Map data &copy; OpenStreetMap contributors';
+		var osm = new L.TileLayer(osmUrl, {minZoom: 5, maxZoom: 18, attribution: osmAttrib});
+		
+		L.control.Legend({
+			title: "Legenda: ",
+            position: "topright",
+            collapsed: false,
+            symbolWidth: 24,
+            opacity: 1,
+            column: 3,
+            legends: [{
+				label: "Wynik Ankiety",
+				type: "polygon",
+				sides: "3",
+				color: "black",
+				fillColor:"#e8ff1b",
+				weight: 0.7
+			},{
+				label: "Siłownia",
+				type: "circle",
+				radius: "7",
+				color: "black",
+				fillColor:"#d3e5e9",
+				weight: 0.7
+			},{
+				label: "Basen",
+				type: "circle",
+				radius: "7",
+				color: "black",
+				fillColor:"#3dd2df",
+				weight: 0.7
+			},{
+				label: "Bar",
+				type: "circle",
+				radius: "7",
+				color: "black",
+				fillColor:"#edb022",
+				weight: 0.7
+			},{
+				label: "Kino",
+				type: "circle",
+				radius: "7",
+				color: "black",
+				fillColor:"#c22662",
+				weight: 0.7	
+			},{
+				label: "Klub",
+				type: "circle",
+				radius: "7",
+				color: "black",
+				fillColor:"#e524ce",
+				weight: 0.7
+			},{
+				label: "Pub",
+				type: "circle",
+				radius: "7",
+				color: "black",
+				fillColor:"#b87e38",
+				weight: 0.7
+			},{
+				label: "Teatr",
+				type: "circle",
+				radius: "7",
+				color: "black",
+				fillColor:"#c52f27",
+				weight: 0.7
+			},{
+				label: "Przystanek",
+				type: "image",
+				url: "do_legendy/bus.png"
+			},{
+				label: "Ulice",
+				type: "polyline",
+				color: "#a8a8a8",
+				fillColor:"#a8a8a8",
+				weight: 2.5
+			},{
+				label: "Budynki",
+				type: "polygon",
+				sides: 4,
+				color: "black",
+				fillColor:"#7f8160",
+				weight: 0.7
+			},{
+				label: "Granice Osiedli",
+				type: "polygon",
+				sides: 4,
+				color: "#fcff33",
+				fillColor:"white",
+				dashArray: [5, 5],
+				weight: 1
+			}]
+        })
+        .addTo(map);
+		
+		L.control.mousePosition({
+			position:"bottomleft",
+			separator:" / ",
+			prefix:"N / E [°]: ",
+			
+		}).addTo(map);
+		L.control.scale().addTo(map);
+		
+		map.addLayer(osm);
+		map.setView(new L.LatLng(59.92448055859924, 10.758276373601069),10);
+		
+		
+		var osm2 = new L.TileLayer(osmUrl, {minZoom: 0, maxZoom: 13, attribution: osmAttrib });
+		var miniMap = new L.Control.MiniMap(osm2, { toggleDisplay: true, width: 200, height: 125 }).addTo(map);
+		
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/tomchadwin/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+        L.control.locate({locateOptions: {maxZoom: 19}}).addTo(map);
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {
+            if (bounds_group.getLayers().length) {
+                map.fitBounds(bounds_group.getBounds());
+            }
+        }
+        map.createPane('pane_ESRISatelliteArcGISWorld_Imagery_0');
+        map.getPane('pane_ESRISatelliteArcGISWorld_Imagery_0').style.zIndex = 400;
+        var layer_ESRISatelliteArcGISWorld_Imagery_0 = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            pane: 'pane_ESRISatelliteArcGISWorld_Imagery_0',
+            opacity: 1.0,
+            attribution: '',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 19
+        });
+        layer_ESRISatelliteArcGISWorld_Imagery_0;
+        map.addLayer(layer_ESRISatelliteArcGISWorld_Imagery_0);
+        function pop_Osiedla_1(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <th scope="row">NROSIEDLA</th>\
+                        <td>' + (feature.properties['NROSIEDLA'] !== null ? autolinker.link(feature.properties['NROSIEDLA'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">NAZWAOSIED</th>\
+                        <td>' + (feature.properties['NAZWAOSIED'] !== null ? autolinker.link(feature.properties['NAZWAOSIED'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">SHAPE_AREA</th>\
+                        <td>' + (feature.properties['SHAPE_AREA'] !== null ? autolinker.link(feature.properties['SHAPE_AREA'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            layer.bindPopup(popupContent, {maxHeight: 400});
+        }
+
+        function style_Osiedla_1_0() {
+            return {
+                pane: 'pane_Osiedla_1',
+                opacity: 1,
+                color: 'rgba(252,255,51,1.0)',
+                dashArray: '10,5',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(141,90,153,0.0)',
+                interactive: false,
+            }
+        }
+        map.createPane('pane_Osiedla_1');
+        map.getPane('pane_Osiedla_1').style.zIndex = 401;
+        map.getPane('pane_Osiedla_1').style['mix-blend-mode'] = 'normal';
+        var layer_Osiedla_1 = new L.geoJson(json_Osiedla_1, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_Osiedla_1',
+            layerName: 'layer_Osiedla_1',
+            pane: 'pane_Osiedla_1',
+            onEachFeature: pop_Osiedla_1,
+            style: style_Osiedla_1_0,
+        });
+        bounds_group.addLayer(layer_Osiedla_1);
+        map.addLayer(layer_Osiedla_1);
+        function pop_Budynki_2(feature, layer) {
+        }
+
+        function style_Budynki_2_0() {
+            return {
+                pane: 'pane_Budynki_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,0.6)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(127,129,96,0.6)',
+                interactive: false,
+            }
+        }
+        map.createPane('pane_Budynki_2');
+        map.getPane('pane_Budynki_2').style.zIndex = 402;
+        map.getPane('pane_Budynki_2').style['mix-blend-mode'] = 'normal';
+        var layer_Budynki_2 = new L.geoJson(json_Budynki_2, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_Budynki_2',
+            layerName: 'layer_Budynki_2',
+            pane: 'pane_Budynki_2',
+            onEachFeature: pop_Budynki_2,
+            style: style_Budynki_2_0,
+        });
+        bounds_group.addLayer(layer_Budynki_2);
+        map.addLayer(layer_Budynki_2);
+        function pop_Ulice_3(feature, layer) {
+            var popupContent = '<table>\
+					<tr>\
+                        <th scope="row">Nazwa</th>\
+                        <td>' + (feature.properties['UL_NAZWA2'] !== null ? autolinker.link(feature.properties['UL_NAZWA2'].toLocaleString()) : ' - ') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Kategoria Zarządzania</th>\
+                        <td>' + (feature.properties['KATZARZ'] !== null ? autolinker.link(feature.properties['KATZARZ'].toLocaleString()) : ' - ') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Klasa Drogi</th>\
+                        <td>' + (feature.properties['KLASADROGI'] !== null ? autolinker.link(feature.properties['KLASADROGI'].toLocaleString()) : ' - ') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Nawierzchnia</th>\
+                        <td>' + (feature.properties['MATNAWIERZ'] !== null ? autolinker.link(feature.properties['MATNAWIERZ'].toLocaleString()) : ' - ') + '</td>\
+                    </tr>\
+                </table>';
+            layer.bindPopup(popupContent, {maxHeight: 400});
+        }
+
+        function style_Ulice_3_0() {
+            return {
+                pane: 'pane_Ulice_3',
+                opacity: 1,
+                color: 'rgba(168,168,168,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 7.0,
+                fillOpacity: 0,
+                interactive: true,
+            }
+        }
+        map.createPane('pane_Ulice_3');
+        map.getPane('pane_Ulice_3').style.zIndex = 403;
+        map.getPane('pane_Ulice_3').style['mix-blend-mode'] = 'normal';
+        var layer_Ulice_3 = new L.geoJson(json_Ulice_3, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Ulice_3',
+            layerName: 'layer_Ulice_3',
+            pane: 'pane_Ulice_3',
+            onEachFeature: pop_Ulice_3,
+            style: style_Ulice_3_0,
+        });
+        bounds_group.addLayer(layer_Ulice_3);
+        map.addLayer(layer_Ulice_3);
+        function pop_Przystanki_4(feature, layer) {
+            var popupContent = '<table>\
+                    <tr>\
+                        <th scope="row">RODZAJ</th>\
+                        <td>' + (feature.properties['RODZAJ'] !== null ? autolinker.link(feature.properties['RODZAJ'].toLocaleString()) : ' - ') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">NAZWA</th>\
+                        <td>' + (feature.properties['NAZWA'] !== null ? autolinker.link(feature.properties['NAZWA'].toLocaleString()) : ' - ') + '</td>\
+                    </tr>\
+                </table>';
+            layer.bindPopup(popupContent, {maxHeight: 400});
+        }
+
+        function style_Przystanki_4_0() {
+            return {
+                pane: 'pane_Przystanki_4',
+        rotationAngle: 0.0,
+        rotationOrigin: 'center center',
+        icon: L.icon({
+            iconUrl: 'markers/transport_bus_station.svg',
+            iconSize: [9.879999999999999, 9.879999999999999]
+        }),
+                interactive: false,
+            }
+        }
+        map.createPane('pane_Przystanki_4');
+        map.getPane('pane_Przystanki_4').style.zIndex = 404;
+        map.getPane('pane_Przystanki_4').style['mix-blend-mode'] = 'normal';
+        var layer_Przystanki_4 = new L.geoJson(json_Przystanki_4, {
+            attribution: '',
+            interactive: false,
+            dataVar: 'json_Przystanki_4',
+            layerName: 'layer_Przystanki_4',
+            pane: 'pane_Przystanki_4',
+            onEachFeature: pop_Przystanki_4,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.marker(latlng, style_Przystanki_4_0(feature));
+            },
+        });
+        bounds_group.addLayer(layer_Przystanki_4);
+        map.addLayer(layer_Przystanki_4);
+        function pop_AktywnociMiejskie_5(feature, layer) {
+            var popupContent = '<table>\
+					<tr>\
+                        <th scope="row">Nazwa</th>\
+                        <td>' + (feature.properties['name'] !== null ? autolinker.link(feature.properties['name'].toLocaleString()) : ' - ') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Rodzaj</th>\
+                        <td>' + (feature.properties['amenity'] !== null ? autolinker.link(feature.properties['amenity'].toLocaleString()) : ' - ') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Ulica</th>\
+                        <td>' + (feature.properties['addr_stree'] !== null ? autolinker.link(feature.properties['addr_stree'].toLocaleString()) : ' - ') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Numer lokalu</th>\
+                        <td>' + (feature.properties['addr_house'] !== null ? autolinker.link(feature.properties['addr_house'].toLocaleString()) : ' - ') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Strona internetowa</th>\
+                        <td>' + (feature.properties['website'] !== null ? autolinker.link(feature.properties['website'].toLocaleString()) : ' - ') + '</td>\
+                    </tr>\
+                </table>';
+            layer.bindPopup(popupContent, {maxHeight: 400});
+        }
+
+        function style_AktywnociMiejskie_5_0(feature) {
+            switch(String(feature.properties['amenity'])) {
+                case 'bar':
+                    return {
+                pane: 'pane_AktywnociMiejskie_5',
+                radius: 5.6,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(237,176,34,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'cinema':
+                    return {
+                pane: 'pane_AktywnociMiejskie_5',
+                radius: 5.6,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(194,38,98,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'nightclub':
+                    return {
+                pane: 'pane_AktywnociMiejskie_5',
+                radius: 5.6,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(229,36,206,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'pub':
+                    return {
+                pane: 'pane_AktywnociMiejskie_5',
+                radius: 5.6,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(184,126,56,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'theatre':
+                    return {
+                pane: 'pane_AktywnociMiejskie_5',
+                radius: 5.6,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(197,47,39,1.0)',
+                interactive: true,
+            }
+                    break;
+                default:
+                    return {
+                pane: 'pane_AktywnociMiejskie_5',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(231,231,231,1.0)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_AktywnociMiejskie_5');
+        map.getPane('pane_AktywnociMiejskie_5').style.zIndex = 405;
+        map.getPane('pane_AktywnociMiejskie_5').style['mix-blend-mode'] = 'normal';
+        var layer_AktywnociMiejskie_5 = new L.geoJson(json_AktywnociMiejskie_5, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_AktywnociMiejskie_5',
+            layerName: 'layer_AktywnociMiejskie_5',
+            pane: 'pane_AktywnociMiejskie_5',
+            onEachFeature: pop_AktywnociMiejskie_5,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_AktywnociMiejskie_5_0(feature));
+            },
+        });
+        var cluster_AktywnociMiejskie_5 = new L.MarkerClusterGroup({showCoverageOnHover: false,
+            spiderfyDistanceMultiplier: 2});
+        cluster_AktywnociMiejskie_5.addLayer(layer_AktywnociMiejskie_5);
+
+        bounds_group.addLayer(layer_AktywnociMiejskie_5);
+        cluster_AktywnociMiejskie_5.addTo(map);
+        function pop_AktywnociSportowe_6(feature, layer) {
+            var popupContent = '<table>\
+					<tr>\
+                        <th scope="row">Nazwa</th>\
+                        <td>' + (feature.properties['name'] !== null ? autolinker.link(feature.properties['name'].toLocaleString()) : ' - ') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Rodzaj</th>\
+                        <td>' + (feature.properties['leisure'] !== null ? autolinker.link(feature.properties['leisure'].toLocaleString()) : ' - ') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Ulica</th>\
+                        <td>' + (feature.properties['addr_stree'] !== null ? autolinker.link(feature.properties['addr_stree'].toLocaleString()) : ' - ') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Numer lokalu</th>\
+                        <td>' + (feature.properties['addr_house'] !== null ? autolinker.link(feature.properties['addr_house'].toLocaleString()) : ' - ') + '</td>\
+                    </tr>\
+					<tr>\
+                        <th scope="row">Strona internetowa</th>\
+                        <td>' + (feature.properties['website'] !== null ? autolinker.link(feature.properties['website'].toLocaleString()) : ' - ') + '</td>\
+                    </tr>\
+                </table>';
+            layer.bindPopup(popupContent, {maxHeight: 400});
+        }
+
+        function style_AktywnociSportowe_6_0(feature) {
+            switch(String(feature.properties['leisure'])) {
+                case 'fitness_centre':
+                    return {
+                pane: 'pane_AktywnociSportowe_6',
+                radius: 5.6,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(211,229,233,1.0)',
+                interactive: true,
+            }
+                    break;
+                case 'swimming_pool':
+                    return {
+                pane: 'pane_AktywnociSportowe_6',
+                radius: 5.6,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(61,210,223,1.0)',
+                interactive: true,
+            }
+                    break;
+                default:
+                    return {
+                pane: 'pane_AktywnociSportowe_6',
+                radius: 4.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(231,231,231,1.0)',
+                interactive: true,
+            }
+                    break;
+            }
+        }
+        map.createPane('pane_AktywnociSportowe_6');
+        map.getPane('pane_AktywnociSportowe_6').style.zIndex = 406;
+        map.getPane('pane_AktywnociSportowe_6').style['mix-blend-mode'] = 'normal';
+        var layer_AktywnociSportowe_6 = new L.geoJson(json_AktywnociSportowe_6, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_AktywnociSportowe_6',
+            layerName: 'layer_AktywnociSportowe_6',
+            pane: 'pane_AktywnociSportowe_6',
+            onEachFeature: pop_AktywnociSportowe_6,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.circleMarker(latlng, style_AktywnociSportowe_6_0(feature));
+            },
+        });
+        var cluster_AktywnociSportowe_6 = new L.MarkerClusterGroup({showCoverageOnHover: false,
+            spiderfyDistanceMultiplier: 2});
+        cluster_AktywnociSportowe_6.addLayer(layer_AktywnociSportowe_6);
+
+        bounds_group.addLayer(layer_AktywnociSportowe_6);
+        cluster_AktywnociSportowe_6.addTo(map);
+        function pop_WynikiAnkiety_7(feature, layer) {
+            var popupContent = '<table>\
+			        <tr>\
+                        <th scope="row">Nazwa miejsca</th>\
+                        <td>' + (feature.properties['nazwa'] !== null ? autolinker.link(feature.properties['nazwa'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Rodzaj aktywności</th>\
+                        <td>' + (feature.properties['rodzaj_akt'] !== null ? autolinker.link(feature.properties['rodzaj_akt'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Jak często spędzano tam czas? (Skala 1-5)</th>\
+                        <td>' + (feature.properties['jak_czest'] !== null ? autolinker.link(feature.properties['jak_czest'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">Czas ostatniej wizyty</th>\
+                        <td>' + (feature.properties['kiedy'] !== null ? autolinker.link(feature.properties['kiedy'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <th scope="row">W ile osób spędzano tam czas?</th>\
+                        <td>' + (feature.properties['ile_osob'] !== null ? autolinker.link(feature.properties['ile_osob'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+					<tr>\
+                        <th scope="row">Data odpowiedzi</th>\
+                        <td>' + (feature.properties['CreationDa'] !== null ? autolinker.link(feature.properties['CreationDa'].toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            layer.bindPopup(popupContent, {maxHeight: 400});
+        }
+
+        function style_WynikiAnkiety_7_0() {
+            return {
+                pane: 'pane_WynikiAnkiety_7',
+                shape: 'triangle',
+                radius: 10.0,
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1,
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(232,255,27,1.0)',
+                interactive: true,
+            }
+        }
+        map.createPane('pane_WynikiAnkiety_7');
+        map.getPane('pane_WynikiAnkiety_7').style.zIndex = 407;
+        map.getPane('pane_WynikiAnkiety_7').style['mix-blend-mode'] = 'normal';
+        var layer_WynikiAnkiety_7 = new L.geoJson(json_WynikiAnkiety_7, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_WynikiAnkiety_7',
+            layerName: 'layer_WynikiAnkiety_7',
+            pane: 'pane_WynikiAnkiety_7',
+            onEachFeature: pop_WynikiAnkiety_7,
+            pointToLayer: function (feature, latlng) {
+                var context = {
+                    feature: feature,
+                    variables: {}
+                };
+                return L.shapeMarker(latlng, style_WynikiAnkiety_7_0(feature));
+            },
+        });
+        var cluster_WynikiAnkiety_7 = new L.MarkerClusterGroup({showCoverageOnHover: false,
+            spiderfyDistanceMultiplier: 2});
+        cluster_WynikiAnkiety_7.addLayer(layer_WynikiAnkiety_7);
+
+        bounds_group.addLayer(layer_WynikiAnkiety_7);
+        cluster_WynikiAnkiety_7.addTo(map);
+        map.on("zoomend", function(e) {
+            if (map.getZoom() <= 19 && map.getZoom() >= 16) {
+                map.addLayer(layer_Budynki_2);
+            } else if (map.getZoom() > 19 || map.getZoom() < 16) {
+                map.removeLayer(layer_Budynki_2);
+            }
+            if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                map.addLayer(layer_Ulice_3);
+            } else if (map.getZoom() > 19 || map.getZoom() < 17) {
+                map.removeLayer(layer_Ulice_3);
+            }
+            if (map.getZoom() <= 19 && map.getZoom() >= 18) {
+                map.addLayer(layer_Przystanki_4);
+            } else if (map.getZoom() > 19 || map.getZoom() < 18) {
+                map.removeLayer(layer_Przystanki_4);
+            }
+        });
+            if (map.getZoom() <= 19 && map.getZoom() >= 16) {
+                map.addLayer(layer_Budynki_2);
+            } else if (map.getZoom() > 19 || map.getZoom() < 16) {
+                map.removeLayer(layer_Budynki_2);
+            }
+            if (map.getZoom() <= 19 && map.getZoom() >= 17) {
+                map.addLayer(layer_Ulice_3);
+            } else if (map.getZoom() > 19 || map.getZoom() < 17) {
+                map.removeLayer(layer_Ulice_3);
+            }
+            if (map.getZoom() <= 19 && map.getZoom() >= 18) {
+                map.addLayer(layer_Przystanki_4);
+            } else if (map.getZoom() > 19 || map.getZoom() < 18) {
+                map.removeLayer(layer_Przystanki_4);
+            }
+        var osmGeocoder = new L.Control.Geocoder({
+            collapsed: true,
+            position: 'topleft',
+            text: 'Search',
+            title: 'Testing'
+        }).addTo(map);
+        document.getElementsByClassName('leaflet-control-geocoder-icon')[0]
+        .className += ' fa fa-search';
+        document.getElementsByClassName('leaflet-control-geocoder-icon')[0]
+        .title += 'Search for a place';
+        var baseMaps = {};
+        L.control.layers(baseMaps,{'<img src="legend/WynikiAnkiety_7.png" /> Wyniki Ankiety': cluster_WynikiAnkiety_7,'Aktywności Sportowe<br /><table><tr><td style="text-align: center;"><img src="legend/AktywnociSportowe_6_Silownia0.png" /></td><td>Silownia</td></tr><tr><td style="text-align: center;"><img src="legend/AktywnociSportowe_6_Basen1.png" /></td><td>Basen</td></tr><tr><td style="text-align: center;"><img src="legend/AktywnociSportowe_6_Pozostale2.png" /></td><td>Pozostale</td></tr></table>': cluster_AktywnociSportowe_6,'Aktywności Miejskie<br /><table><tr><td style="text-align: center;"><img src="legend/AktywnociMiejskie_5_Bar0.png" /></td><td>Bar</td></tr><tr><td style="text-align: center;"><img src="legend/AktywnociMiejskie_5_Kino1.png" /></td><td>Kino</td></tr><tr><td style="text-align: center;"><img src="legend/AktywnociMiejskie_5_Klub2.png" /></td><td>Klub</td></tr><tr><td style="text-align: center;"><img src="legend/AktywnociMiejskie_5_Pub3.png" /></td><td>Pub</td></tr><tr><td style="text-align: center;"><img src="legend/AktywnociMiejskie_5_Teatr4.png" /></td><td>Teatr</td></tr><tr><td style="text-align: center;"><img src="legend/AktywnociMiejskie_5_Pozostale5.png" /></td><td>Pozostale</td></tr></table>': cluster_AktywnociMiejskie_5,'<img src="legend/Przystanki_4.png" /> Przystanki': layer_Przystanki_4,'<img src="legend/Ulice_3.png" /> Ulice': layer_Ulice_3,'<img src="legend/Budynki_2.png" /> Budynki': layer_Budynki_2,'<img src="legend/Osiedla_1.png" /> Osiedla': layer_Osiedla_1,"ESRI Satellite (ArcGIS/World_Imagery)": layer_ESRISatelliteArcGISWorld_Imagery_0,}).addTo(map);
+        map.on("zoomend", function(){
+
+                if (map.hasLayer(layer_AktywnociMiejskie_5)) {
+                    if (map.getZoom() <= 16 && map.getZoom() >= 19) {
+                        layer_AktywnociMiejskie_5.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_AktywnociMiejskie_5.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_AktywnociSportowe_6)) {
+                    if (map.getZoom() <= 16 && map.getZoom() >= 19) {
+                        layer_AktywnociSportowe_6.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_AktywnociSportowe_6.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+        });
+        setBounds();
+        var i = 0;
+        layer_Osiedla_1.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['NAZWAOSIED'] !== null?String('<div style="color: #feffcc; font-size: 8pt; font-family: \'Calibri\', sans-serif; font-style: italic; text-shadow: -1px -1px 0 #000000,1px -1px 0 #000000,-1px 1px 0 #000000,1px 1px 0 #000000">' + layer.feature.properties['NAZWAOSIED']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_Osiedla_1'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        var i = 0;
+        layer_Ulice_3.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['UL_NAZWA2'] !== null?String('<div style="color: #D1CECE; font-size: 8pt; font-family: \'Calibri\', sans-serif; font-style: italic; text-shadow: -1px -1px 0 #000000,1px -1px 0 #000000,-1px 1px 0 #000000,1px 1px 0 #000000">' + layer.feature.properties['UL_NAZWA2']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_Ulice_3'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        var i = 0;
+        layer_AktywnociMiejskie_5.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['name'] !== null?String('<div style="color: #ffffff; font-size: 14pt; font-family: \'Calibri\', sans-serif; text-shadow: -1px -1px 0 #000000,1px -1px 0 #000000,-1px 1px 0 #000000,1px 1px 0 #000000">' + layer.feature.properties['name']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_AktywnociMiejskie_5'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+        var i = 0;
+        layer_AktywnociSportowe_6.eachLayer(function(layer) {
+            var context = {
+                feature: layer.feature,
+                variables: {}
+            };
+            layer.bindTooltip((layer.feature.properties['name'] !== null?String('<div style="color: #ffffff; font-size: 14pt; font-family: \'Calibri\', sans-serif; text-shadow: -1px -1px 0 #000000,1px -1px 0 #000000,-1px 1px 0 #000000,1px 1px 0 #000000">' + layer.feature.properties['name']) + '</div>':''), {permanent: true, offset: [-0, -16], className: 'css_AktywnociSportowe_6'});
+            labels.push(layer);
+            totalMarkers += 1;
+              layer.added = true;
+              addLabel(layer, i);
+              i++;
+        });
+                if (map.hasLayer(layer_AktywnociMiejskie_5)) {
+                    if (map.getZoom() <= 16 && map.getZoom() >= 19) {
+                        layer_AktywnociMiejskie_5.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_AktywnociMiejskie_5.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+                if (map.hasLayer(layer_AktywnociSportowe_6)) {
+                    if (map.getZoom() <= 16 && map.getZoom() >= 19) {
+                        layer_AktywnociSportowe_6.eachLayer(function (layer) {
+                            layer.openTooltip();
+                        });
+                    } else {
+                        layer_AktywnociSportowe_6.eachLayer(function (layer) {
+                            layer.closeTooltip();
+                        });
+                    }
+                }
+        map.addControl(new L.Control.Search({
+            layer: cluster_Ulice_3,
+            initial: false,
+            hideMarkerOnCollapse: true,
+            propertyName: 'UL_NAZWA2'}));
+        document.getElementsByClassName('search-button')[0].className +=
+         ' fa fa-binoculars';
+        resetLabels([layer_Osiedla_1,layer_Ulice_3,layer_AktywnociMiejskie_5,layer_AktywnociSportowe_6]);
+        map.on("zoomend", function(){
+            resetLabels([layer_Osiedla_1,layer_Ulice_3,layer_AktywnociMiejskie_5,layer_AktywnociSportowe_6]);
+        });
+        map.on("layeradd", function(){
+            resetLabels([layer_Osiedla_1,layer_Ulice_3,layer_AktywnociMiejskie_5,layer_AktywnociSportowe_6]);
+        });
+        map.on("layerremove", function(){
+            resetLabels([layer_Osiedla_1,layer_Ulice_3,layer_AktywnociMiejskie_5,layer_AktywnociSportowe_6]);
+        });
+        </script>
+    </body>
+</html>
